@@ -269,6 +269,22 @@ func main() {
 			},
 		},
 		{
+			Name: "pull",
+			Usage: "Pull new images for a docker compose project",
+			Action: func(c *cli.Context) error {
+				project, err := search(c.Args().Get(0))
+
+				if err != nil {
+					fmt.Println(err.Error())
+					return nil
+				}
+
+				dc(project, "pull")
+
+				return nil
+			},
+		},
+		{
 			Name:    "list",
 			Aliases: []string{"ls"},
 			Usage:   "List available docker compose projects",
