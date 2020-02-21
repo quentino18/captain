@@ -218,7 +218,12 @@ func main() {
 				}
 
 				fmt.Println("Restarting " + project.Name + "\n")
-				dc(project, "restart")
+				if c.NArg() > 1 {
+					args := append([]string{"restart"}, c.Args().Tail()...)
+					dc(project, args...)
+				} else {
+					dc(project, "restart")
+				}
 
 				return nil
 			},
