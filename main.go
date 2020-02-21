@@ -270,17 +270,29 @@ func main() {
 		},
 		{
 			Name: "pull",
-			Usage: "Pull new images for a docker compose project",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name: "all, a",
+					Usage: "Pull all projects",
+				},
+			},
+			Usage: "Pull a docker compose project",
 			Action: func(c *cli.Context) error {
-				project, err := search(c.Args().Get(0))
+				if c.Bool("all") {
+					for _, project := range projects() {
+						fmt.Println("Pulling " + project.Name + "\n")
+						dc(project, "pull")
+					}
+				} else {
+					project, err := search(c.Args().Get(0))
 
-				if err != nil {
-					fmt.Println(err.Error())
-					return nil
+					if err != nil {
+						fmt.Println(err.Error())
+						return nil
+					}
+					fmt.Println("Pulling " + project.Name + "\n")
+					dc(project, "pull")
 				}
-
-				dc(project, "pull")
-
 				return nil
 			},
 		},
