@@ -157,7 +157,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "captain"
 	app.Usage = "Start and stop docker compose projects"
-	app.Version = "0.3.2"
+	app.Version = "0.4.0"
 
 	app.Commands = []cli.Command{
 		{
@@ -303,6 +303,28 @@ func main() {
 					fmt.Println("Pulling " + project.Name + "\n")
 					dc(project, "pull")
 				}
+				return nil
+			},
+		},
+		{
+			Name: "exec",
+			Usage: "Execute a command in a service in a docker compose project",
+			Action: func(c *cli.Context) error {
+				if  c.NArg() > 2 {
+					project, err := search(c.Args().Get(0))
+
+					if err != nil {
+						fmt.Println(err.Error())
+						return nil
+					}
+
+					fmt.Printf("Executing %s in %s\n\n", c.Args().Get(2), project.Name + "/" + c.Args().Get(1))
+					args := append([]string{"exec"}, c.Args().Tail()...)
+					dc(project, args...)
+				} else {
+					fmt.Println("Too few arguments\n")
+				}
+
 				return nil
 			},
 		},
