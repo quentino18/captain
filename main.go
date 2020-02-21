@@ -201,7 +201,12 @@ func main() {
 				}
 
 				fmt.Println("Stopping " + project.Name + "\n")
-				dc(project, "stop")
+				if c.NArg() > 1 {
+					args := append([]string{"stop"}, c.Args().Tail()...)
+					dc(project, args...)
+				} else {
+					dc(project, "stop")
+				}
 
 				return nil
 			},
