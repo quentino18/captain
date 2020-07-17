@@ -169,7 +169,7 @@ func main() {
 					Usage: "Start project in detached mode",
 				},
 			},
-			Usage: "Start a docker compose project",
+			Usage: "Start a docker compose project or container(s)",
 			Action: func(c *cli.Context) error {
 				project, err := search(c.Args().Get(0))
 
@@ -179,11 +179,15 @@ func main() {
 				}
 
 				fmt.Println("Starting " + project.Name + "\n")
+
+				args := []string{"up"}
 				if c.Bool("detach") {
-					dc(project, "up", "-d")
-				} else {
-					dc(project, "up")
+					args = append(args, "-d")
 				}
+				if c.NArg() > 1 {
+					args = append(args, c.Args().Tail()...)
+				}
+				dc(project, args...)
 
 				return nil
 			},
@@ -191,7 +195,7 @@ func main() {
 		{
 			Name:    "stop",
 			Aliases: []string{"down", "dock"},
-			Usage:   "Stop a docker compose project",
+			Usage:   "Stop a docker compose project or container(s)",
 			Action: func(c *cli.Context) error {
 				project, err := search(c.Args().Get(0))
 
@@ -201,19 +205,19 @@ func main() {
 				}
 
 				fmt.Println("Stopping " + project.Name + "\n")
+
+				args := []string{"stop"}
 				if c.NArg() > 1 {
-					args := append([]string{"stop"}, c.Args().Tail()...)
-					dc(project, args...)
-				} else {
-					dc(project, "stop")
+					args = append(args, c.Args().Tail()...)
 				}
+				dc(project, args...)
 
 				return nil
 			},
 		},
 		{
 			Name:  "restart",
-			Usage: "Restart a docker compose project",
+			Usage: "Restart a docker compose project or container(s)",
 			Action: func(c *cli.Context) error {
 				project, err := search(c.Args().Get(0))
 
@@ -223,19 +227,19 @@ func main() {
 				}
 
 				fmt.Println("Restarting " + project.Name + "\n")
+
+				args := []string{"restart"}
 				if c.NArg() > 1 {
-					args := append([]string{"restart"}, c.Args().Tail()...)
-					dc(project, args...)
-				} else {
-					dc(project, "restart")
+					args = append(args, c.Args().Tail()...)
 				}
+				dc(project, args...)
 
 				return nil
 			},
 		},
 		{
 			Name:  "build",
-			Usage: "Build a docker compose project",
+			Usage: "Build a docker compose project or container(s)",
 			Action: func(c *cli.Context) error {
 				project, err := search(c.Args().Get(0))
 
@@ -245,14 +249,25 @@ func main() {
 				}
 
 				fmt.Println("Building " + project.Name + "\n")
-				dc(project, "build")
+
+				args := []string{"build"}
+				if c.NArg() > 1 {
+					args = append(args, c.Args().Tail()...)
+				}
+				dc(project, args...)
 
 				return nil
 			},
 		},
 		{
-			Name:  "logs",
-			Usage: "View container output from a docker compose project",
+			Name: "logs",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "follow, f",
+					Usage: "Follow logs",
+				},
+			},
+			Usage: "View container output from a docker compose project or container(s)",
 			Action: func(c *cli.Context) error {
 				project, err := search(c.Args().Get(0))
 
@@ -261,7 +276,14 @@ func main() {
 					return nil
 				}
 
-				dc(project, "logs")
+				args := []string{"logs"}
+				if c.Bool("follow") {
+					args = append(args, "-f")
+				}
+				if c.NArg() > 1 {
+					args = append(args, c.Args().Tail()...)
+				}
+				dc(project, args...)
 
 				return nil
 			},
@@ -271,7 +293,7 @@ func main() {
 			Usage: "Stop all running docker containers",
 			Action: func(c *cli.Context) error {
 				fmt.Println("Stopping all containers")
-				cmd := exec.Command("sh", "-c", "docker ps -q | xargs -n 1 -P 8 -I {} docker stop {}")
+				cmd := exec.Command("sh", "-c", "docker stop $(docker ps -a -q)")
 				cmd.Stdout = os.Stdout
 				cmd.Stdin = os.Stdin
 				cmd.Stderr = os.Stderr
@@ -282,7 +304,7 @@ func main() {
 			Name: "pull",
 			Flags: []cli.Flag{
 				cli.BoolFlag{
-					Name: "all, a",
+					Name:  "all, a",
 					Usage: "Pull all projects",
 				},
 			},
@@ -307,10 +329,10 @@ func main() {
 			},
 		},
 		{
-			Name: "exec",
+			Name:  "exec",
 			Usage: "Execute a command in a service in a docker compose project",
 			Action: func(c *cli.Context) error {
-				if  c.NArg() > 2 {
+				if c.NArg() > 2 {
 					project, err := search(c.Args().Get(0))
 
 					if err != nil {
@@ -318,7 +340,7 @@ func main() {
 						return nil
 					}
 
-					fmt.Printf("Executing %s in %s\n\n", c.Args().Get(2), project.Name + "/" + c.Args().Get(1))
+					fmt.Printf("Executing %s in %s\n\n", c.Args().Get(2), project.Name+"/"+c.Args().Get(1))
 					args := append([]string{"exec"}, c.Args().Tail()...)
 					dc(project, args...)
 				} else {
