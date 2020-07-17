@@ -157,7 +157,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "captain"
 	app.Usage = "Start and stop docker compose projects"
-	app.Version = "0.4.0"
+	app.Version = "0.5.0"
 
 	app.Commands = []cli.Command{
 		{
@@ -171,6 +171,11 @@ func main() {
 			},
 			Usage: "Start a docker compose project or container(s)",
 			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 && c.NumFlags() == 0 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+
 				project, err := search(c.Args().Get(0))
 
 				if err != nil {
@@ -197,6 +202,11 @@ func main() {
 			Aliases: []string{"down", "dock"},
 			Usage:   "Stop a docker compose project or container(s)",
 			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+
 				project, err := search(c.Args().Get(0))
 
 				if err != nil {
@@ -219,6 +229,11 @@ func main() {
 			Name:  "restart",
 			Usage: "Restart a docker compose project or container(s)",
 			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+
 				project, err := search(c.Args().Get(0))
 
 				if err != nil {
@@ -241,6 +256,11 @@ func main() {
 			Name:  "build",
 			Usage: "Build a docker compose project or container(s)",
 			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+
 				project, err := search(c.Args().Get(0))
 
 				if err != nil {
@@ -269,6 +289,11 @@ func main() {
 			},
 			Usage: "View container output from a docker compose project or container(s)",
 			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 && c.NumFlags() == 0 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+
 				project, err := search(c.Args().Get(0))
 
 				if err != nil {
@@ -310,6 +335,11 @@ func main() {
 			},
 			Usage: "Pull a docker compose project",
 			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 && c.NumFlags() == 0 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+
 				if c.Bool("all") {
 					for _, project := range projects() {
 						fmt.Println("Pulling " + project.Name + "\n")
@@ -332,6 +362,11 @@ func main() {
 			Name:  "exec",
 			Usage: "Execute a command in a service in a docker compose project",
 			Action: func(c *cli.Context) error {
+				if c.NArg() < 2 {
+					cli.ShowCommandHelp(c, c.Command.Name)
+					return nil
+				}
+
 				if c.NArg() > 2 {
 					project, err := search(c.Args().Get(0))
 
@@ -343,8 +378,6 @@ func main() {
 					fmt.Printf("Executing %s in %s\n\n", c.Args().Get(2), project.Name+"/"+c.Args().Get(1))
 					args := append([]string{"exec"}, c.Args().Tail()...)
 					dc(project, args...)
-				} else {
-					fmt.Println("Too few arguments\n")
 				}
 
 				return nil
