@@ -254,27 +254,40 @@ func main() {
 		},
 		{
 			Name:  "build",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "all, a",
+					Usage: "Build all projects",
+				},
+			},
 			Usage: "Build a docker compose project or container(s)",
 			Action: func(c *cli.Context) error {
-				if c.NArg() == 0 {
+				if c.NArg() == 0 && c.NumFlags() == 0 {
 					cli.ShowCommandHelp(c, c.Command.Name)
 					return nil
 				}
 
-				project, err := search(c.Args().Get(0))
+				if c.Bool("all") {
+					for _, project := range projects() {
+						fmt.Println("Building " + project.Name + "\n")
+						dc(project, "build")
+					}
+				} else {
+					project, err := search(c.Args().Get(0))
 
-				if err != nil {
-					fmt.Println(err.Error())
-					return nil
+					if err != nil {
+						fmt.Println(err.Error())
+						return nil
+					}
+
+					fmt.Println("Building " + project.Name + "\n")
+
+					args := []string{"build"}
+					if c.NArg() > 1 {
+						args = append(args, c.Args().Tail()...)
+					}
+					dc(project, args...)
 				}
-
-				fmt.Println("Building " + project.Name + "\n")
-
-				args := []string{"build"}
-				if c.NArg() > 1 {
-					args = append(args, c.Args().Tail()...)
-				}
-				dc(project, args...)
 
 				return nil
 			},
